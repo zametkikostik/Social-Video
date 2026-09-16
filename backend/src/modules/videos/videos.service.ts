@@ -1,12 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { ModerationService } from '../moderation/moderation.service';
 
 @Injectable()
 export class VideosService {
   constructor(
     private prisma: PrismaService,
     private storage: StorageService,
+    private moderation: ModerationService,
   ) {}
 
   async create(data: {
@@ -17,9 +19,22 @@ export class VideosService {
     originalKey: string;
     isShort?: boolean;
   }) {
+    const [user, channel] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: data.uploaderId } }),
+      this.prisma.channel.findUnique({ where: { id: data.channelId } }),
+    ]);
+
+    if (!user || !channel) {
+      throw new NotFoundException('User or channel not found');
+    }
+
+    if (channel.ownerId !== data.uploaderId) {
+      throw new ForbiddenException('You do not own this channel');
+    }
+
     const slug = this.generateSlug(data.title);
 
-    return this.prisma.video.create({
+    const video = await this.prisma.video.create({
       data: {
         title: data.title,
         description: data.description,
@@ -29,8 +44,30 @@ export class VideosService {
         originalKey: data.originalKey,
         status: 'PROCESSING',
         isShort: data.isShort || false,
+        moderationStatus: 'PENDING',
       },
     });
+
+    const textToCheck = `${data.title}\n${data.description || ''}`;
+    const modResult = await this.moderation.moderateText(textToCheck, {
+      userId: data.uploaderId,
+      isVerifiedUser: user.isVerified,
+      isVerifiedChannel: channel.isVerified,
+      targetType: 'video',
+      videoId: video.id,
+    });
+
+    const updated = await this.moderation.applyToVideo(video.id, modResult);
+
+    return {
+      ...updated,
+      moderation: {
+        status: modResult.status,
+        score: modResult.score,
+        labels: modResult.labels,
+        skippedBecauseVerified: modResult.skippedBecauseVerified || false,
+      },
+    };
   }
 
   async findById(id: string) {
@@ -43,6 +80,7 @@ export class VideosService {
             name: true,
             slug: true,
             avatarUrl: true,
+            isVerified: true,
           },
         },
         uploader: {
@@ -51,12 +89,20 @@ export class VideosService {
             username: true,
             displayName: true,
             avatarUrl: true,
+            isVerified: true,
           },
         },
       },
     });
 
     if (!video) {
+      throw new NotFoundException('Video not found');
+    }
+
+    if (
+      video.moderationStatus === 'REJECTED' ||
+      video.moderationStatus === 'QUARANTINED'
+    ) {
       throw new NotFoundException('Video not found');
     }
 
@@ -82,6 +128,10 @@ export class VideosService {
       where: {
         status: 'READY',
         visibility: 'PUBLIC',
+        moderationStatus: {
+          in: ['APPROVED', 'SKIPPED_VERIFIED'],
+        },
+        isQuarantined: false,
       },
       orderBy: { publishedAt: 'desc' },
       take: limit,
@@ -93,6 +143,7 @@ export class VideosService {
             name: true,
             slug: true,
             avatarUrl: true,
+            isVerified: true,
           },
         },
       },

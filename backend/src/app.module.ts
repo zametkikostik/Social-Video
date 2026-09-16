@@ -5,6 +5,7 @@ import { UsersModule } from './modules/users/users.module';
 import { VideosModule } from './modules/videos/videos.module';
 import { ChannelsModule } from './modules/channels/channels.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { ModerationModule } from './modules/moderation/moderation.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { PrismaModule } from './prisma/prisma.module';
     VideosModule,
     ChannelsModule,
     StorageModule,
+    ModerationModule,
   ],
 })
 export class AppModule {}

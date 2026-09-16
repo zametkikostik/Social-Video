@@ -45,6 +45,7 @@ model Channel {
   avatarUrl   String?
   bannerUrl   String?
   isPublic    Boolean  @default(true)
+  isVerified  Boolean  @default(false)  // verified channels get soft moderation
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -62,7 +63,7 @@ model Video {
   title         String
   description   String?
   slug          String      @unique
-  status        VideoStatus @default(PROCESSING)
+  status        VideoStatus @default(UPLOADING)
   visibility    Visibility  @default(PUBLIC)
   duration      Int?
   views         Int         @default(0)
@@ -79,6 +80,14 @@ model Video {
   isShort       Boolean     @default(false)
   publishedAt   DateTime?
 
+  // AI Moderation
+  moderationStatus   ModerationStatus @default(PENDING)
+  moderationScore    Float?
+  moderationLabels   String[]
+  moderationReason   String?
+  moderatedAt        DateTime?
+  isQuarantined      Boolean          @default(false)
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -90,10 +99,12 @@ model Video {
 
   comments      Comment[]
   likes         Like[]
+  moderationLogs ModerationLog[]
 
   @@index([status])
   @@index([channelId])
   @@index([isShort])
+  @@index([moderationStatus])
   @@map("videos")
 }
 
@@ -103,6 +114,16 @@ enum VideoStatus {
   READY
   FAILED
   DELETED
+  QUARANTINED
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  QUARANTINED
+  SKIPPED_VERIFIED
+  MANUAL_REVIEW
 }
 
 enum Visibility {
@@ -118,6 +139,11 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  moderationStatus ModerationStatus @default(PENDING)
+  moderationScore  Float?
+  moderationLabels String[]
+  isHidden         Boolean          @default(false)
+
   videoId   String
   video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
@@ -128,7 +154,35 @@ model Comment {
   parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
   replies   Comment[] @relation("CommentReplies")
 
+  moderationLogs ModerationLog[]
+
   @@map("comments")
+}
+
+model ModerationLog {
+  id          String   @id @default(cuid())
+  targetType  String
+  action      String
+  score       Float?
+  labels      String[]
+  reason      String?
+  provider    String?
+  rawResponse Json?
+
+  videoId     String?
+  video       Video?   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  commentId   String?
+  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  moderatorId String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([targetType])
+  @@index([videoId])
+  @@index([commentId])
+  @@map("moderation_logs")
 }
 
 model Like {
