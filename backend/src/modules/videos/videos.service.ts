@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { ModerationService } from '../moderation/moderation.service';
+import { TranscoderService } from '../transcoder/transcoder.service';
 
 @Injectable()
 export class VideosService {
@@ -9,6 +10,7 @@ export class VideosService {
     private prisma: PrismaService,
     private storage: StorageService,
     private moderation: ModerationService,
+    private transcoder: TranscoderService,
   ) {}
 
   async create(data: {
@@ -59,6 +61,19 @@ export class VideosService {
 
     const updated = await this.moderation.applyToVideo(video.id, modResult);
 
+    let jobId: string | number | undefined;
+    if (
+      modResult.status === 'APPROVED' ||
+      modResult.status === 'SKIPPED_VERIFIED' ||
+      modResult.status === 'QUARANTINED'
+    ) {
+      jobId = await this.transcoder.enqueue({
+        videoId: video.id,
+        originalKey: data.originalKey,
+        isShort: data.isShort,
+      });
+    }
+
     return {
       ...updated,
       moderation: {
@@ -67,6 +82,7 @@ export class VideosService {
         labels: modResult.labels,
         skippedBecauseVerified: modResult.skippedBecauseVerified || false,
       },
+      transcodeJobId: jobId,
     };
   }
 

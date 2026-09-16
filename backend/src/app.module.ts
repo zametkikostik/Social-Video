@@ -6,6 +6,7 @@ import { VideosModule } from './modules/videos/videos.module';
 import { ChannelsModule } from './modules/channels/channels.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { ModerationModule } from './modules/moderation/moderation.module';
+import { TranscoderModule } from './modules/transcoder/transcoder.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ChannelsModule,
     StorageModule,
     ModerationModule,
+    TranscoderModule,
   ],
 })
 export class AppModule {}
