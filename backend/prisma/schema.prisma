@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  displayName   String?
+  passwordHash  String
+  avatarUrl     String?
+  bio           String?
+  role          Role      @default(USER)
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  channels      Channel[]
+  videos        Video[]
+  comments      Comment[]
+  likes         Like[]
+  subscriptions Subscription[] @relation("Subscriber")
+  subscribers   Subscription[] @relation("ChannelOwner")
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  CREATOR
+  MODERATOR
+  ADMIN
+}
+
+model Channel {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  avatarUrl   String?
+  bannerUrl   String?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  videos      Video[]
+  subscribers Subscription[]
+
+  @@map("channels")
+}
+
+model Video {
+  id            String      @id @default(cuid())
+  title         String
+  description   String?
+  slug          String      @unique
+  status        VideoStatus @default(PROCESSING)
+  visibility    Visibility  @default(PUBLIC)
+  duration      Int?
+  views         Int         @default(0)
+  likesCount    Int         @default(0)
+  commentsCount Int         @default(0)
+
+  originalKey   String?
+  hlsMasterKey  String?
+  thumbnailKey  String?
+  previewGifKey String?
+
+  width         Int?
+  height        Int?
+  isShort       Boolean     @default(false)
+  publishedAt   DateTime?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  channelId     String
+  channel       Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  uploaderId    String
+  uploader      User        @relation(fields: [uploaderId], references: [id])
+
+  comments      Comment[]
+  likes         Like[]
+
+  @@index([status])
+  @@index([channelId])
+  @@index([isShort])
+  @@map("videos")
+}
+
+enum VideoStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
+enum Visibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+  SCHEDULED
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  parentId  String?
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, userId])
+  @@map("likes")
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  subscriberId String
+  subscriber   User   @relation("Subscriber", fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  channelId    String
+  channel      Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  channelOwnerId String
+  channelOwner   User   @relation("ChannelOwner", fields: [channelOwnerId], references: [id])
+
+  @@unique([subscriberId, channelId])
+  @@map("subscriptions")
+}
