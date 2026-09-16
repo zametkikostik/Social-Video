@@ -12,6 +12,7 @@
 - Все ключевые новинки YouTube 2025–2026 (Shorts, Live improvements, AI-ready, Community Posts)
 - Самостоятельный хостинг + возможность федерации (ActivityPub)
 - **Cloudflare R2** как основной object storage (zero egress)
+- **AI Moderator** — авто-модерация токсичного контента + soft-pass для verified
 - Мобильные приложения (Phase 3)
 - Плагинная архитектура
 
@@ -35,7 +36,7 @@
 ┌─────────────────┐   ┌──────────────────┐   ┌─────────────────┐
 │  Backend API    │   │  Transcoder      │   │  Live Server    │
 │  (NestJS + TS)  │   │  (FFmpeg +       │   │  (NGINX-RTMP +  │
-│                 │   │   BullMQ/Redis)  │   │   WebRTC)       │
+│  + AI Moderator │   │   BullMQ/Redis)  │   │   WebRTC)       │
 └────────┬────────┘   └────────┬─────────┘   └────────┬────────┘
          │                     │                      │
          ▼                     ▼                      ▼
@@ -54,7 +55,8 @@
 | Database          | PostgreSQL 16                          |
 | Cache / Queue     | Redis + BullMQ                         |
 | Object Storage    | Cloudflare R2 (S3-compatible)          |
-| Transcoding       | FFmpeg                                 |
+| Transcoding       | FFmpeg → multi-quality HLS             |
+| Moderation        | OpenAI Moderation API + local heuristic |
 | Live              | NGINX-RTMP / MediaMTX + WebRTC         |
 | Auth              | JWT + OAuth2                           |
 | Player            | HLS.js / Video.js                      |
@@ -62,20 +64,22 @@
 
 ## План разработки
 
-### Phase 0 — Foundation (текущая)
+### Phase 0 — Foundation ✅
 - [x] Структура репозитория
-- [x] Docker Compose (Postgres, Redis, MinIO для локального S3)
+- [x] Docker Compose (Postgres, Redis, MinIO)
 - [x] Backend NestJS + Prisma schema
 - [x] Frontend Next.js skeleton
-- [x] Cloudflare R2 интеграция
+- [x] Cloudflare R2 / MinIO интеграция
 - [x] Auth (register / login / JWT)
-- [ ] Базовый upload + queue (next)
+- [x] AI Moderator (verified soft-pass)
+- [x] Upload + Transcoder (BullMQ + FFmpeg → HLS)
 
-### Phase 1 — Core VOD
-- Upload → multi-quality HLS → R2
-- Каналы, видео-страницы, плеер
-- Подписки, лайки, комментарии, плейлисты
-- Поиск и базовые рекомендации
+### Phase 1 — Core VOD (следующая)
+- [ ] Страница загрузки (frontend)
+- [ ] Видео-страница + HLS-плеер
+- [ ] Подписки, лайки, комментарии
+- [ ] Плейлисты
+- [ ] Поиск и базовые рекомендации
 
 ### Phase 2 — Social + Live
 - Shorts (вертикальный feed)
@@ -93,7 +97,23 @@
 - AI recommendations, auto-captions, smart thumbnails
 - ActivityPub federation
 - P2P (WebRTC segments)
-- Admin panel + moderation
+- Admin panel + advanced moderation
+
+## Upload flow
+
+1. `POST /api/storage/upload-url` → presigned URL (R2/MinIO)
+2. Клиент заливает файл напрямую
+3. `POST /api/videos` (title, channelId, originalKey) → AI moderation → enqueue transcode
+4. Worker: FFmpeg → 1080p/720p/480p/360p HLS + thumbnail → R2
+5. Статус видео → `READY`
+
+## AI Moderator
+
+| Тип пользователя | Токсичный контент | Результат |
+|------------------|-------------------|-----------|
+| Обычный | score ≥ 0.7 | Quarantine / Reject |
+| **Verified** | любой score | `SKIPPED_VERIFIED` + лог |
+| Moderator/Admin | — | Ручной override |
 
 ## Быстрый старт (локально)
 
@@ -102,21 +122,33 @@ git clone https://github.com/zametkikostik/Social-Video.git
 cd Social-Video
 cp .env.example .env
 # Заполни Cloudflare R2 credentials (или используй MinIO локально)
+# Опционально: OPENAI_API_KEY для модерации
+
 docker compose up -d
+
 cd backend && npm install && npx prisma migrate dev
+npm run start:dev          # API :4000
+
 cd ../frontend && npm install
-npm run dev
+npm run dev                # UI :3000
 ```
+
+**Требования:** FFmpeg и ffprobe должны быть в PATH на машине, где крутится backend.
 
 ## Структура репозитория
 
 ```
 /
 ├── backend/          # NestJS API
+│   └── src/modules/
+│       ├── auth/
+│       ├── users/
+│       ├── channels/
+│       ├── videos/
+│       ├── storage/      # R2 + MinIO
+│       ├── moderation/   # AI Moderator
+│       └── transcoder/   # BullMQ + FFmpeg
 ├── frontend/         # Next.js web app
-├── docker/           # Доп. конфиги
-├── docs/             # Документация
-├── scripts/          # Утилиты
 ├── docker-compose.yml
 ├── LICENSE           # AGPLv3
 └── README.md
