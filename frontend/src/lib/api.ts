@@ -56,6 +56,7 @@ export const api = {
   createVideo: (data: { title: string; description?: string; channelId: string; originalKey: string; isShort?: boolean }) =>
     request('/videos', { method: 'POST', body: JSON.stringify(data) }),
   listVideos: (limit = 20, offset = 0) => request(`/videos?limit=${limit}&offset=${offset}`),
+  listShorts: (limit = 20, offset = 0) => request(`/videos/shorts?limit=${limit}&offset=${offset}`),
   searchVideos: (q: string, limit = 20, offset = 0) =>
     request(`/videos/search?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`),
   getVideo: (id: string) => request(`/videos/${id}`),
