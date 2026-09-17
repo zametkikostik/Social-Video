@@ -32,6 +32,8 @@ model User {
   notificationsSent Notification[] @relation("NotificationActor")
   communityPosts CommunityPost[]
   liveChatMessages LiveChatMessage[]
+  tipsSent     Tip[] @relation("TipSender")
+  tipsReceived Tip[] @relation("TipReceiver")
 
   @@map("users")
 }
@@ -111,6 +113,7 @@ model Video {
   likes         Like[]
   moderationLogs ModerationLog[]
   playlistItems PlaylistItem[]
+  tips Tip[]
 
   @@index([status])
   @@index([channelId])
@@ -359,4 +362,38 @@ model LiveChatMessage {
 
   @@index([streamId, createdAt])
   @@map("live_chat_messages")
+}
+
+enum TipStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  FAILED
+}
+
+model Tip {
+  id         String    @id @default(cuid())
+  amount     Int
+  currency   String    @default("USD")
+  message    String?
+  status     TipStatus @default(COMPLETED)
+  paymentRef String?
+
+  createdAt DateTime @default(now())
+
+  fromUserId String
+  fromUser   User   @relation("TipSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+
+  toUserId String
+  toUser   User   @relation("TipReceiver", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  videoId String?
+  video   Video?  @relation(fields: [videoId], references: [id], onDelete: SetNull)
+
+  channelId String?
+
+  @@index([toUserId, createdAt])
+  @@index([fromUserId])
+  @@index([videoId])
+  @@map("tips")
 }
