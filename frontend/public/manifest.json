@@ -1,0 +1,38 @@
+{
+  "name": "Social-Video",
+  "short_name": "SocialVideo",
+  "description": "Open-source social video platform — VOD, Live, Shorts. AGPLv3.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#e11d48",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "ru",
+  "categories": ["entertainment", "social", "video"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Загрузить", "url": "/upload", "description": "Загрузить видео" },
+    { "name": "Shorts", "url": "/shorts", "description": "Смотреть Shorts" },
+    { "name": "Live", "url": "/live", "description": "Прямые эфиры" }
+  ]
+}
