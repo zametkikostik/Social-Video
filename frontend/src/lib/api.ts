@@ -119,4 +119,22 @@ export const api = {
   tipsSent: () => request('/tips/sent'),
   tipsBalance: () => request('/tips/balance'),
   tipsForVideo: (videoId: string) => request(`/tips/video/${videoId}`),
+  adminStats: () => request('/admin/stats'),
+  adminUsers: (q?: string) =>
+    request(`/admin/users${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  adminSetRole: (id: string, role: string) =>
+    request(`/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+  adminSetVerified: (id: string, isVerified: boolean) =>
+    request(`/admin/users/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isVerified }),
+    }),
+  adminModerationVideos: (status?: string) =>
+    request(`/admin/moderation/videos${status ? `?status=${status}` : ''}`),
+  adminModerateVideo: (id: string, action: string, reason?: string) =>
+    request(`/admin/moderation/videos/${id}`, {
+      method: 'POST',
+      body: JSON.stringify({ action, reason }),
+    }),
+  adminLogs: () => request('/admin/moderation/logs'),
 };
