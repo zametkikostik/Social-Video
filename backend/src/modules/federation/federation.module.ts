@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { FederationService } from './federation.service';
 import { FederationController } from './federation.controller';
 
+@Global()
 @Module({
   providers: [FederationService],
   controllers: [FederationController],

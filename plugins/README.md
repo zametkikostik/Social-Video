@@ -10,4 +10,4 @@ Hooks: `onVideoReady`, `onCommentCreate`, `onTipCompleted`, `onUserRegister`, `o
 
 API: `GET /api/plugins`
 
-Docker: `./plugins` mounted at `/app/plugins` (`PLUGINS_DIR`).
+Docker: mount `./plugins` at `/app/plugins`.
