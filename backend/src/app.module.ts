@@ -10,6 +10,7 @@ import { TranscoderModule } from './modules/transcoder/transcoder.module';
 import { LikesModule } from './modules/likes/likes.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -29,6 +30,7 @@ import { PrismaModule } from './prisma/prisma.module';
     LikesModule,
     CommentsModule,
     SubscriptionsModule,
+    PlaylistsModule,
   ],
 })
 export class AppModule {}

@@ -19,8 +19,29 @@ export class VideosController {
   async list(
     @Query('limit') limit = '20',
     @Query('offset') offset = '0',
+    @Query('q') q?: string,
   ) {
+    if (q && q.trim()) {
+      return this.videosService.search(
+        q,
+        parseInt(limit, 10),
+        parseInt(offset, 10),
+      );
+    }
     return this.videosService.listPublic(
+      parseInt(limit, 10),
+      parseInt(offset, 10),
+    );
+  }
+
+  @Get('search')
+  async search(
+    @Query('q') q = '',
+    @Query('limit') limit = '20',
+    @Query('offset') offset = '0',
+  ) {
+    return this.videosService.search(
+      q,
       parseInt(limit, 10),
       parseInt(offset, 10),
     );
