@@ -96,18 +96,27 @@ export const api = {
     request(`/notifications/${id}/read`, { method: 'POST' }),
   markAllNotificationsRead: () =>
     request('/notifications/read-all', { method: 'POST' }),
-  getCommunityBySlug: (slug: string) =>
-    request(`/community/channel/${slug}`),
+  getCommunityBySlug: (slug: string) => request(`/community/channel/${slug}`),
   createCommunityPost: (channelId: string, data: { text: string; imageUrl?: string; videoId?: string }) =>
     request(`/channels/${channelId}/community`, { method: 'POST', body: JSON.stringify(data) }),
-  deleteCommunityPost: (id: string) =>
-    request(`/community/${id}`, { method: 'DELETE' }),
-  likeCommunityPost: (id: string) =>
-    request(`/community/${id}/like`, { method: 'POST' }),
+  deleteCommunityPost: (id: string) => request(`/community/${id}`, { method: 'DELETE' }),
+  likeCommunityPost: (id: string) => request(`/community/${id}/like`, { method: 'POST' }),
   getFeed: (limit = 24, offset = 0) =>
     request(`/recommendations/feed?limit=${limit}&offset=${offset}`),
   getRelated: (videoId: string, limit = 12) =>
     request(`/recommendations/related/${videoId}?limit=${limit}`),
   getTrendingShorts: (limit = 30) =>
     request(`/recommendations/shorts?limit=${limit}`),
+  sendTip: (data: {
+    toUserId: string;
+    amount: number;
+    message?: string;
+    videoId?: string;
+    channelId?: string;
+    currency?: string;
+  }) => request('/tips', { method: 'POST', body: JSON.stringify(data) }),
+  tipsReceived: () => request('/tips/received'),
+  tipsSent: () => request('/tips/sent'),
+  tipsBalance: () => request('/tips/balance'),
+  tipsForVideo: (videoId: string) => request(`/tips/video/${videoId}`),
 };
