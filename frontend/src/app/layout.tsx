@@ -22,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </form>
             <nav className="flex items-center gap-3 text-sm text-zinc-400 flex-shrink-0">
               <a href="/search" className="sm:hidden hover:text-white transition">🔍</a>
+              <a href="/live" className="hover:text-white transition">Live</a>
               <a href="/shorts" className="hover:text-white transition">Shorts</a>
               <a href="/upload" className="hover:text-white transition">Загрузить</a>
               <a href="/playlists" className="hover:text-white transition hidden sm:inline">Плейлисты</a>
