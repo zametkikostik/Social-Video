@@ -1,172 +1,104 @@
 # Social-Video
 
-**Открытый social video hosting** — современная альтернатива YouTube с поддержкой VOD, Live, Shorts, монетизацией и Cloudflare R2.
+**Open-source social video platform** — self-hosted alternative to YouTube with VOD, Live, Shorts, tips, AI moderation, Cloudflare R2, and ActivityPub federation.
 
-Лицензия: **GNU Affero General Public License v3.0 (AGPLv3)**
+**License:** [GNU Affero General Public License v3.0](./LICENSE) (AGPLv3)
 
-Репозиторий: https://github.com/zametkikostik/Social-Video
-
-## Цели проекта
-
-- Полноценный видео-хостинг с социальными функциями
-- Все ключевые новинки YouTube 2025–2026 (Shorts, Live improvements, AI-ready, Community Posts)
-- Самостоятельный хостинг + возможность федерации (ActivityPub)
-- **Cloudflare R2** как основной object storage (zero egress)
-- **AI Moderator** — авто-модерация токсичного контента + soft-pass для verified
-- Мобильные приложения (Phase 3)
-- Плагинная архитектура
-
-## Архитектура
-
-```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Web Frontend   │     │  Mobile Apps     │     │  Embed Player   │
-│  (Next.js 15)   │◄───►│  (React Native)  │     │  (HLS.js)       │
-└────────┬────────┘     └────────┬─────────┘     └────────┬────────┘
-         │                       │                        │
-         └───────────────────────┼────────────────────────┘
-                                 ▼
-                    ┌────────────────────────┐
-                    │   API Gateway / Nginx  │
-                    │   + Cloudflare         │
-                    └────────────┬───────────┘
-                                 ▼
-         ┌───────────────────────┼───────────────────────┐
-         ▼                       ▼                       ▼
-┌─────────────────┐   ┌──────────────────┐   ┌─────────────────┐
-│  Backend API    │   │  Transcoder      │   │  Live Server    │
-│  (NestJS + TS)  │   │  (FFmpeg +       │   │  (NGINX-RTMP +  │
-│  + AI Moderator │   │   BullMQ/Redis)  │   │   WebRTC)       │
-└────────┬────────┘   └────────┬─────────┘   └────────┬────────┘
-         │                     │                      │
-         ▼                     ▼                      ▼
-┌─────────────────┐   ┌──────────────────┐   ┌─────────────────┐
-│  PostgreSQL     │   │  Cloudflare R2   │   │  Redis          │
-│  (metadata)     │   │  (videos, HLS)   │   │  (cache/queue)  │
-└─────────────────┘   └──────────────────┘   └─────────────────┘
-```
-
-## Технологический стек
-
-| Слой              | Технологии                              |
-|-------------------|-----------------------------------------|
-| Frontend          | Next.js 15, React 19, Tailwind CSS, TypeScript |
-| Backend           | NestJS, TypeScript, Prisma             |
-| Database          | PostgreSQL 16                          |
-| Cache / Queue     | Redis + BullMQ                         |
-| Object Storage    | Cloudflare R2 (S3-compatible)          |
-| Transcoding       | FFmpeg → multi-quality HLS             |
-| Moderation        | OpenAI Moderation API + local heuristic |
-| Live              | NGINX-RTMP / MediaMTX + WebRTC         |
-| Auth              | JWT + OAuth2                           |
-| Player            | HLS.js / Video.js                      |
-| Infra             | Docker Compose, Cloudflare             |
-
-## План разработки
-
-### Phase 0 — Foundation ✅
-- [x] Структура репозитория
-- [x] Docker Compose (Postgres, Redis, MinIO)
-- [x] Backend NestJS + Prisma schema
-- [x] Frontend Next.js skeleton
-- [x] Cloudflare R2 / MinIO интеграция
-- [x] Auth (register / login / JWT)
-- [x] AI Moderator (verified soft-pass)
-- [x] Upload + Transcoder (BullMQ + FFmpeg → HLS)
-
-### Phase 1 — Core VOD (следующая)
-- [ ] Страница загрузки (frontend)
-- [ ] Видео-страница + HLS-плеер
-- [ ] Подписки, лайки, комментарии
-- [ ] Плейлисты
-- [ ] Поиск и базовые рекомендации
-
-### Phase 2 — Social + Live
-- Shorts (вертикальный feed)
-- Live streaming (RTMP + WebRTC)
-- Community Posts, notifications
-- Realtime chat
-
-### Phase 3 — Monetization & Scale
-- Subscriptions / PPV / Donations
-- Ads (VAST)
-- Analytics + CDN
-- Mobile apps (React Native)
-
-### Phase 4 — Advanced
-- AI recommendations, auto-captions, smart thumbnails
-- ActivityPub federation
-- P2P (WebRTC segments)
-- Admin panel + advanced moderation
-
-## Upload flow
-
-1. `POST /api/storage/upload-url` → presigned URL (R2/MinIO)
-2. Клиент заливает файл напрямую
-3. `POST /api/videos` (title, channelId, originalKey) → AI moderation → enqueue transcode
-4. Worker: FFmpeg → 1080p/720p/480p/360p HLS + thumbnail → R2
-5. Статус видео → `READY`
-
-## AI Moderator
-
-| Тип пользователя | Токсичный контент | Результат |
-|------------------|-------------------|-----------|
-| Обычный | score ≥ 0.7 | Quarantine / Reject |
-| **Verified** | любой score | `SKIPPED_VERIFIED` + лог |
-| Moderator/Admin | — | Ручной override |
-
-## Быстрый старт (локально)
-
-```bash
-git clone https://github.com/zametkikostik/Social-Video.git
-cd Social-Video
-cp .env.example .env
-# Заполни Cloudflare R2 credentials (или используй MinIO локально)
-# Опционально: OPENAI_API_KEY для модерации
-
-docker compose up -d
-
-cd backend && npm install && npx prisma migrate dev
-npm run start:dev          # API :4000
-
-cd ../frontend && npm install
-npm run dev                # UI :3000
-```
-
-**Требования:** FFmpeg и ffprobe должны быть в PATH на машине, где крутится backend.
-
-## Структура репозитория
-
-```
-/
-├── backend/          # NestJS API
-│   └── src/modules/
-│       ├── auth/
-│       ├── users/
-│       ├── channels/
-│       ├── videos/
-│       ├── storage/      # R2 + MinIO
-│       ├── moderation/   # AI Moderator
-│       └── transcoder/   # BullMQ + FFmpeg
-├── frontend/         # Next.js web app
-├── docker-compose.yml
-├── LICENSE           # AGPLv3
-└── README.md
-```
-
-## Вдохновение
-
-- [AVideo](https://github.com/wwbn/avideo) — плагины и mature PHP-стек
-- [PeerTube](https://github.com/Chocobozzz/PeerTube) — federation + P2P
-- [Odysee](https://github.com/OdyseeTeam) — decentralized + mobile
-- StreamPHP Marketplace — идеи плагинов и monetization
-
-## Лицензия
-
-Этот проект распространяется под **GNU Affero General Public License v3.0**.  
-См. файл [LICENSE](./LICENSE).
+**Repo:** https://github.com/zametkikostik/Social-Video
 
 ---
 
-Сделано с ❤️ для открытого видео.  
-Если хочешь помочь — открывай Issues и Pull Requests!
+## Features
+
+| Area | Capabilities |
+|------|----------------|
+| **VOD** | Upload → FFmpeg multi-quality HLS → R2/MinIO |
+| **Shorts** | Vertical feed |
+| **Live** | RTMP ingest (nginx-rtmp) + HLS playback + WebSocket chat |
+| **Social** | Channels, subs, likes, comments, playlists, community posts |
+| **Moderation** | AI + heuristics; verified users skip auto-ban |
+| **Storage** | Cloudflare R2 (primary) · MinIO (local) · optional IPFS pin |
+| **Monetization** | Tips / donations (gateway-ready) |
+| **Discovery** | Ranked feed, related videos, search |
+| **PWA** | Installable, offline shell, mobile bottom nav |
+| **Admin** | Stats, user roles, verification, moderation queue |
+| **Federation** | ActivityPub: WebFinger, Actor, Outbox, Inbox, **HTTP Signatures**, fan-out |
+
+---
+
+## Quick start
+
+### 1. Infrastructure
+
+```bash
+docker compose up -d
+# Postgres :5432 · Redis :6379 · MinIO :9000 (console :9001) · RTMP :1935 · HLS :8080
+```
+
+### 2. Backend
+
+```bash
+cd backend
+cp ../.env.example .env
+npm install
+npx prisma migrate dev
+npm run seed              # admin@social.video / Admin123!
+npm run start:dev         # http://localhost:4000
+```
+
+### 3. Frontend
+
+```bash
+cd frontend
+npm install
+python3 scripts/generate-icons.py
+npm run dev               # http://localhost:3000
+```
+
+### Default seed accounts
+
+| Role | Email | Password |
+|------|-------|----------|
+| ADMIN | `admin@social.video` | `Admin123!` |
+| MODERATOR | `mod@social.video` | `Mod123!` |
+
+Admin UI: `/admin`
+
+---
+
+## Environment
+
+See `.env.example`. Key variables:
+
+```env
+DATABASE_URL=postgresql://socialvideo:socialvideo@localhost:5432/socialvideo
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=change-me
+S3_ENDPOINT=http://localhost:9000
+S3_ACCESS_KEY=minioadmin
+S3_SECRET_KEY=minioadmin
+S3_BUCKET=social-video
+APP_URL=http://localhost:3000
+AP_BASE_URL=http://localhost:4000
+```
+
+---
+
+## ActivityPub
+
+Outbound **Create** activities are **HTTP Signature–signed** (rsa-sha256) and delivered to remote followers when a video becomes `READY`.
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/.well-known/webfinger` | Discovery |
+| `GET /api/ap/channels/:slug` | Actor + public key |
+| `GET /api/ap/channels/:slug/outbox` | Create(Video) collection |
+| `POST /api/ap/channels/:slug/inbox` | Follow / Undo + signed Accept |
+
+Docs: `/federation`
+
+---
+
+## License
+
+GNU AGPLv3 — see [LICENSE](./LICENSE).
