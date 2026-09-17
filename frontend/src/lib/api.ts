@@ -104,4 +104,10 @@ export const api = {
     request(`/community/${id}`, { method: 'DELETE' }),
   likeCommunityPost: (id: string) =>
     request(`/community/${id}/like`, { method: 'POST' }),
+  getFeed: (limit = 24, offset = 0) =>
+    request(`/recommendations/feed?limit=${limit}&offset=${offset}`),
+  getRelated: (videoId: string, limit = 12) =>
+    request(`/recommendations/related/${videoId}?limit=${limit}`),
+  getTrendingShorts: (limit = 30) =>
+    request(`/recommendations/shorts?limit=${limit}`),
 };
