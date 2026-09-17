@@ -18,6 +18,7 @@ import { CommunityModule } from './modules/community/community.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 import { TipsModule } from './modules/tips/tips.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -45,6 +46,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ChatModule,
     RecommendationsModule,
     TipsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
