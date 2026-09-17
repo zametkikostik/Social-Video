@@ -27,6 +27,7 @@ model User {
   subscriptions Subscription[] @relation("Subscriber")
   subscribers   Subscription[] @relation("ChannelOwner")
   playlists     Playlist[]
+  liveStreams   LiveStream[]
 
   @@map("users")
 }
@@ -55,6 +56,7 @@ model Channel {
 
   videos      Video[]
   subscribers Subscription[]
+  liveStreams LiveStream[]
 
   @@map("channels")
 }
@@ -71,13 +73,11 @@ model Video {
   likesCount    Int         @default(0)
   commentsCount Int         @default(0)
 
-  // Storage (R2 primary)
   originalKey   String?
   hlsMasterKey  String?
   thumbnailKey  String?
   previewGifKey String?
 
-  // IPFS (optional pin of original)
   ipfsCid        String?
   ipfsGatewayUrl String?
 
@@ -252,4 +252,38 @@ model PlaylistItem {
   @@unique([playlistId, videoId])
   @@index([playlistId])
   @@map("playlist_items")
+}
+
+enum LiveStatus {
+  IDLE
+  STARTING
+  LIVE
+  ENDED
+}
+
+model LiveStream {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      LiveStatus @default(IDLE)
+  streamKey   String     @unique
+  hlsUrl      String?
+  viewers     Int        @default(0)
+  peakViewers Int        @default(0)
+  startedAt   DateTime?
+  endedAt     DateTime?
+  recordedVideoId String?
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  channelId   String
+  channel     Channel    @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([channelId])
+  @@map("live_streams")
 }
