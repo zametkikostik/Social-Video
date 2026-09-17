@@ -62,6 +62,35 @@ export class ChannelsService {
     });
   }
 
+  async listVideos(slug: string, limit = 20, offset = 0) {
+    const channel = await this.prisma.channel.findUnique({ where: { slug } });
+    if (!channel) throw new NotFoundException('Channel not found');
+
+    return this.prisma.video.findMany({
+      where: {
+        channelId: channel.id,
+        status: 'READY',
+        visibility: 'PUBLIC',
+        moderationStatus: { in: ['APPROVED', 'SKIPPED_VERIFIED'] },
+        isQuarantined: false,
+      },
+      orderBy: { publishedAt: 'desc' },
+      take: limit,
+      skip: offset,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        thumbnailKey: true,
+        duration: true,
+        views: true,
+        isShort: true,
+        publishedAt: true,
+        likesCount: true,
+      },
+    });
+  }
+
   private generateSlug(name: string): string {
     return name
       .toLowerCase()

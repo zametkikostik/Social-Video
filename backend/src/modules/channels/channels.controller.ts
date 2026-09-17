@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -35,5 +36,18 @@ export class ChannelsController {
   @Get(':slug')
   async getBySlug(@Param('slug') slug: string) {
     return this.channelsService.findBySlug(slug);
+  }
+
+  @Get(':slug/videos')
+  async channelVideos(
+    @Param('slug') slug: string,
+    @Query('limit') limit = '20',
+    @Query('offset') offset = '0',
+  ) {
+    return this.channelsService.listVideos(
+      slug,
+      parseInt(limit, 10),
+      parseInt(offset, 10),
+    );
   }
 }
