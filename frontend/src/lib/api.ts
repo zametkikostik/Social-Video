@@ -51,6 +51,8 @@ export const api = {
     request('/channels', { method: 'POST', body: JSON.stringify(data) }),
   myChannels: () => request('/channels/me'),
   getChannel: (slug: string) => request(`/channels/${slug}`),
+  getChannelVideos: (slug: string, limit = 20) =>
+    request(`/channels/${slug}/videos?limit=${limit}`),
   getUploadUrl: (filename: string, contentType: string) =>
     request('/storage/upload-url', { method: 'POST', body: JSON.stringify({ filename, contentType }) }),
   createVideo: (data: { title: string; description?: string; channelId: string; originalKey: string; isShort?: boolean }) =>
@@ -94,4 +96,12 @@ export const api = {
     request(`/notifications/${id}/read`, { method: 'POST' }),
   markAllNotificationsRead: () =>
     request('/notifications/read-all', { method: 'POST' }),
+  getCommunityBySlug: (slug: string) =>
+    request(`/community/channel/${slug}`),
+  createCommunityPost: (channelId: string, data: { text: string; imageUrl?: string; videoId?: string }) =>
+    request(`/channels/${channelId}/community`, { method: 'POST', body: JSON.stringify(data) }),
+  deleteCommunityPost: (id: string) =>
+    request(`/community/${id}`, { method: 'DELETE' }),
+  likeCommunityPost: (id: string) =>
+    request(`/community/${id}/like`, { method: 'POST' }),
 };
