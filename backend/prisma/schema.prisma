@@ -26,6 +26,7 @@ model User {
   likes         Like[]
   subscriptions Subscription[] @relation("Subscriber")
   subscribers   Subscription[] @relation("ChannelOwner")
+  playlists     Playlist[]
 
   @@map("users")
 }
@@ -45,7 +46,7 @@ model Channel {
   avatarUrl   String?
   bannerUrl   String?
   isPublic    Boolean  @default(true)
-  isVerified  Boolean  @default(false)  // verified channels get soft moderation
+  isVerified  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -80,7 +81,6 @@ model Video {
   isShort       Boolean     @default(false)
   publishedAt   DateTime?
 
-  // AI Moderation
   moderationStatus   ModerationStatus @default(PENDING)
   moderationScore    Float?
   moderationLabels   String[]
@@ -100,6 +100,7 @@ model Video {
   comments      Comment[]
   likes         Like[]
   moderationLogs ModerationLog[]
+  playlistItems PlaylistItem[]
 
   @@index([status])
   @@index([channelId])
@@ -214,4 +215,36 @@ model Subscription {
 
   @@unique([subscriberId, channelId])
   @@map("subscriptions")
+}
+
+model Playlist {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  items       PlaylistItem[]
+
+  @@map("playlists")
+}
+
+model PlaylistItem {
+  id         String   @id @default(cuid())
+  position   Int      @default(0)
+  addedAt    DateTime @default(now())
+
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  videoId    String
+  video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, videoId])
+  @@index([playlistId])
+  @@map("playlist_items")
 }
