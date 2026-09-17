@@ -13,6 +13,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { IpfsModule } from './modules/ipfs/ipfs.module';
 import { LiveModule } from './modules/live/live.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
     IpfsModule,
+    NotificationsModule,
     AuthModule,
     UsersModule,
     VideosModule,
