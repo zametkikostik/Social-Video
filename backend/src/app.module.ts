@@ -12,6 +12,7 @@ import { CommentsModule } from './modules/comments/comments.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { IpfsModule } from './modules/ipfs/ipfs.module';
+import { LiveModule } from './modules/live/live.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -33,6 +34,7 @@ import { PrismaModule } from './prisma/prisma.module';
     CommentsModule,
     SubscriptionsModule,
     PlaylistsModule,
+    LiveModule,
   ],
 })
 export class AppModule {}
