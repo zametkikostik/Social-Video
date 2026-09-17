@@ -71,10 +71,15 @@ model Video {
   likesCount    Int         @default(0)
   commentsCount Int         @default(0)
 
+  // Storage (R2 primary)
   originalKey   String?
   hlsMasterKey  String?
   thumbnailKey  String?
   previewGifKey String?
+
+  // IPFS (optional pin of original)
+  ipfsCid        String?
+  ipfsGatewayUrl String?
 
   width         Int?
   height        Int?
