@@ -76,6 +76,51 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - hls_data:/tmp/hls
 
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: socialvideo-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://socialvideo:socialvideo@postgres:5432/socialvideo?schema=public
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_BUCKET: social-video
+      S3_FORCE_PATH_STYLE: "true"
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      AP_BASE_URL: ${AP_BASE_URL:-http://localhost:4000}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      RUN_SEED: ${RUN_SEED:-true}
+      PORT: "4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-http://localhost:4000}
+    container_name: socialvideo-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
 volumes:
   postgres_data:
   redis_data:
