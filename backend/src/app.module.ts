@@ -15,6 +15,7 @@ import { IpfsModule } from './modules/ipfs/ipfs.module';
 import { LiveModule } from './modules/live/live.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CommunityModule } from './modules/community/community.module';
+import { ChatModule } from './modules/chat/chat.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PlaylistsModule,
     LiveModule,
     CommunityModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
