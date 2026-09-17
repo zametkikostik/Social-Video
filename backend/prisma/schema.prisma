@@ -30,6 +30,7 @@ model User {
   liveStreams   LiveStream[]
   notifications Notification[] @relation("NotificationRecipient")
   notificationsSent Notification[] @relation("NotificationActor")
+  communityPosts CommunityPost[]
 
   @@map("users")
 }
@@ -59,6 +60,7 @@ model Channel {
   videos      Video[]
   subscribers Subscription[]
   liveStreams LiveStream[]
+  communityPosts CommunityPost[]
 
   @@map("channels")
 }
@@ -320,4 +322,23 @@ model Notification {
   @@index([recipientId, isRead])
   @@index([recipientId, createdAt])
   @@map("notifications")
+}
+
+model CommunityPost {
+  id         String   @id @default(cuid())
+  text       String
+  imageUrl   String?
+  videoId    String?
+  likesCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
+  @@map("community_posts")
 }
