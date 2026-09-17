@@ -1,0 +1,9 @@
+{
+  "id": "hello-webhook",
+  "name": "Hello Webhook",
+  "version": "1.0.0",
+  "description": "Logs video-ready and tip events (example plugin)",
+  "author": "Social-Video",
+  "hooks": ["onVideoReady", "onTipCompleted"],
+  "enabled": true
+}
