@@ -1,10 +1,12 @@
 # Social-Video
 
-**Open-source social video platform** — self-hosted alternative to YouTube with VOD, Live, Shorts, tips, AI moderation, Cloudflare R2, and ActivityPub federation.
+**Open-source social video platform** — self-hosted alternative to YouTube with VOD, Live, Shorts, multi-provider tips, AI moderation, Cloudflare R2, plugins, and ActivityPub federation.
 
 **License:** [GNU Affero General Public License v3.0](./LICENSE) (AGPLv3)
 
-**Repo:** https://github.com/zametkikostik/Social-Video
+**Repository:** https://github.com/zametkikostik/Social-Video
+
+**Languages:** [English](./README.md) · [Български](./README.bg.md)
 
 ---
 
@@ -12,27 +14,49 @@
 
 | Area | Capabilities |
 |------|----------------|
-| **VOD** | Upload → FFmpeg multi-quality HLS → R2/MinIO |
-| **Shorts** | Vertical feed |
-| **Live** | RTMP ingest (nginx-rtmp) + HLS playback + WebSocket chat |
-| **Social** | Channels, subs, likes, comments, playlists, community posts |
-| **Moderation** | AI + heuristics; verified users skip auto-ban |
-| **Storage** | Cloudflare R2 (primary) · MinIO (local) · optional IPFS pin |
-| **Monetization** | Tips / donations (gateway-ready) |
+| **VOD** | Upload → FFmpeg multi-quality HLS → Cloudflare R2 / MinIO |
+| **Shorts** | Vertical short-form feed |
+| **Live** | RTMP ingest (nginx-rtmp) + HLS + WebSocket chat |
+| **Social** | Channels, subscriptions, likes, comments, playlists, community posts |
+| **Moderation** | AI + heuristics; verified creators can bypass auto-quarantine |
+| **Storage** | R2 (production) · MinIO (dev) · optional IPFS pin |
+| **Monetization** | Tips: Web3/MetaMask, Stripe, YooMoney, Payeer, CryptoBot |
+| **Hype** | Promote videos in the recommendation feed for a limited time |
+| **Audio tracks** | Multi-language dub / TTS pipeline (owner-requested) |
+| **i18n UI** | en, ru, bg, tr, th, zh, fr, it, pt-BR, es |
+| **Compliance** | Cookie consent, Privacy/Terms, GDPR export & account delete |
 | **Discovery** | Ranked feed, related videos, search |
-| **PWA** | Installable, offline shell, mobile bottom nav |
-| **Admin** | Stats, user roles, verification, moderation queue |
-| **Federation** | ActivityPub: WebFinger, Actor, Outbox, Inbox, **HTTP Signatures**, fan-out |
+| **PWA** | Installable progressive web app |
+| **Admin** | Roles, verification, moderation queue, stats |
+| **Plugins** | Hook-based extensions (`onVideoReady`, `onTipCompleted`, …) |
+| **Metrics** | Prometheus-compatible `GET /api/metrics` |
+| **Federation** | ActivityPub (see below) |
+
+### ActivityPub federation (included)
+
+Social-Video **already includes** an ActivityPub foundation:
+
+| Endpoint / behaviour | Status |
+|----------------------|--------|
+| WebFinger | Yes |
+| Actor (channel/user) + keypair | Yes |
+| Outbox (Create Video activities) | Yes |
+| Inbox (Follow + Accept) | Yes |
+| HTTP Signatures (rsa-sha256) signed delivery | Yes |
+| Fan-out announce on video ready | Yes |
+| Full PeerTube-level (relays, remote media proxy, Like/Announce UI) | Partial / roadmap |
+
+Enough for basic interop with the fediverse; not a full PeerTube replacement yet.
 
 ---
 
-## Quick start
+## Quick start (development)
 
 ### 1. Infrastructure
 
 ```bash
 docker compose up -d
-# Postgres :5432 · Redis :6379 · MinIO :9000 (console :9001) · RTMP :1935 · HLS :8080
+# Postgres :5432 · Redis :6379 · MinIO :9000 · RTMP :1935
 ```
 
 ### 2. Backend
@@ -51,54 +75,73 @@ npm run start:dev         # http://localhost:4000
 ```bash
 cd frontend
 npm install
-python3 scripts/generate-icons.py
 npm run dev               # http://localhost:3000
 ```
 
-### Default seed accounts
+### Seed accounts (change in production)
 
 | Role | Email | Password |
 |------|-------|----------|
 | ADMIN | `admin@social.video` | `Admin123!` |
 | MODERATOR | `mod@social.video` | `Mod123!` |
 
-Admin UI: `/admin`
+---
+
+## Production deploy
+
+See **[docs/PRODUCTION.md](./docs/PRODUCTION.md)**.
+
+```bash
+cp .env.production.example .env.production
+# Set DOMAIN, JWT_SECRET, POSTGRES_PASSWORD, R2 keys, WEB3_RPC_URL, …
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+curl -s https://$DOMAIN/api/health/ready
+```
+
+Smoke tests: [docs/SMOKE_CHECKLIST.md](./docs/SMOKE_CHECKLIST.md)
 
 ---
 
-## Environment
+## Architecture
 
-See `.env.example`. Key variables:
-
-```env
-DATABASE_URL=postgresql://socialvideo:socialvideo@localhost:5432/socialvideo
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=change-me
-S3_ENDPOINT=http://localhost:9000
-S3_ACCESS_KEY=minioadmin
-S3_SECRET_KEY=minioadmin
-S3_BUCKET=social-video
-APP_URL=http://localhost:3000
-AP_BASE_URL=http://localhost:4000
+```
+Next.js 15  ──►  NestJS API  ──►  PostgreSQL + Prisma
+     │                │
+     │                ├── Redis + BullMQ (transcode / jobs)
+     │                ├── R2 / MinIO (objects)
+     │                ├── nginx-rtmp (live)
+     │                └── plugins/ (hooks)
+     └── PWA + i18n
 ```
 
 ---
 
-## ActivityPub
+## Plugins
 
-Outbound **Create** activities are **HTTP Signature–signed** (rsa-sha256) and delivered to remote followers when a video becomes `READY`.
+```
+plugins/my-plugin/
+  manifest.json
+  index.js
+```
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/.well-known/webfinger` | Discovery |
-| `GET /api/ap/channels/:slug` | Actor + public key |
-| `GET /api/ap/channels/:slug/outbox` | Create(Video) collection |
-| `POST /api/ap/channels/:slug/inbox` | Follow / Undo + signed Accept |
+Hooks: `onVideoReady`, `onCommentCreate`, `onTipCompleted`, `onUserRegister`, `onLiveStart`
 
-Docs: `/federation`
+List: `GET /api/plugins` — see [plugins/README.md](./plugins/README.md)
+
+---
+
+## API highlights
+
+| Path | Description |
+|------|-------------|
+| `GET /api/health` · `/api/health/ready` | Liveness / readiness |
+| `GET /api/metrics` | Prometheus metrics |
+| `GET /api/plugins` | Loaded plugins |
+| `GET /api/.well-known/webfinger` | Federation discovery |
+| `GET /api/ap/channels/:slug` | ActivityPub Actor |
 
 ---
 
 ## License
 
-GNU AGPLv3 — see [LICENSE](./LICENSE).
+GNU **AGPLv3** — see [LICENSE](./LICENSE).
