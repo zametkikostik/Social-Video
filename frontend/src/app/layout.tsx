@@ -26,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/shorts" className="hover:text-white transition">Shorts</a>
               <a href="/upload" className="hover:text-white transition">Загрузить</a>
               <a href="/playlists" className="hover:text-white transition hidden sm:inline">Плейлисты</a>
+              <a href="/notifications" className="hover:text-white transition" title="Уведомления">🔔</a>
               <a href="/auth/login" className="rounded-full bg-brand-600 px-4 py-1.5 text-white hover:bg-brand-500 transition">Войти</a>
             </nav>
           </div>

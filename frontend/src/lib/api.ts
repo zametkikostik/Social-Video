@@ -83,9 +83,15 @@ export const api = {
     request(`/playlists/${playlistId}/videos/${videoId}`, { method: 'DELETE' }),
   createLive: (data: { title: string; description?: string; channelId: string }) =>
     request('/live', { method: 'POST', body: JSON.stringify(data) }),
-  listLive: (limit = 20, offset = 0) =>
-    request(`/live?limit=${limit}&offset=${offset}`),
+  listLive: (limit = 20, offset = 0) => request(`/live?limit=${limit}&offset=${offset}`),
   getLive: (id: string) => request(`/live/${id}`),
   endLive: (id: string) => request(`/live/${id}/end`, { method: 'POST' }),
   myLive: () => request('/live/me'),
+  listNotifications: (limit = 30, unreadOnly = false) =>
+    request(`/notifications?limit=${limit}${unreadOnly ? '&unread=1' : ''}`),
+  unreadNotificationsCount: () => request('/notifications/unread-count'),
+  markNotificationRead: (id: string) =>
+    request(`/notifications/${id}/read`, { method: 'POST' }),
+  markAllNotificationsRead: () =>
+    request('/notifications/read-all', { method: 'POST' }),
 };
