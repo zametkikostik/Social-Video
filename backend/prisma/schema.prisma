@@ -31,6 +31,7 @@ model User {
   notifications Notification[] @relation("NotificationRecipient")
   notificationsSent Notification[] @relation("NotificationActor")
   communityPosts CommunityPost[]
+  liveChatMessages LiveChatMessage[]
 
   @@map("users")
 }
@@ -287,6 +288,8 @@ model LiveStream {
   userId      String
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  chatMessages LiveChatMessage[]
+
   @@index([status])
   @@index([channelId])
   @@map("live_streams")
@@ -341,4 +344,19 @@ model CommunityPost {
 
   @@index([channelId, createdAt])
   @@map("community_posts")
+}
+
+model LiveChatMessage {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+
+  streamId String
+  stream   LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([streamId, createdAt])
+  @@map("live_chat_messages")
 }
