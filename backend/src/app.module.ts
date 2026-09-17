@@ -7,6 +7,9 @@ import { ChannelsModule } from './modules/channels/channels.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { ModerationModule } from './modules/moderation/moderation.module';
 import { TranscoderModule } from './modules/transcoder/transcoder.module';
+import { LikesModule } from './modules/likes/likes.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -23,6 +26,9 @@ import { PrismaModule } from './prisma/prisma.module';
     StorageModule,
     ModerationModule,
     TranscoderModule,
+    LikesModule,
+    CommentsModule,
+    SubscriptionsModule,
   ],
 })
 export class AppModule {}

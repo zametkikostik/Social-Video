@@ -28,7 +28,12 @@ export class VideosController {
 
   @Get(':id')
   async getOne(@Param('id') id: string) {
-    return this.videosService.findById(id);
+    return this.videosService.findByIdAndIncrementViews(id);
+  }
+
+  @Post(':id/view')
+  async recordView(@Param('id') id: string) {
+    return this.videosService.incrementViews(id);
   }
 
   @Post()
