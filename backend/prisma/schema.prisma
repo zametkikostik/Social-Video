@@ -17,6 +17,11 @@ model User {
   bio           String?
   role          Role      @default(USER)
   isVerified    Boolean   @default(false)
+  apPublicKey   String?
+  apPrivateKey  String?
+  payoutAddress String?
+  yoomoneyWallet String?
+  payeerAccount  String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -64,6 +69,7 @@ model Channel {
   subscribers Subscription[]
   liveStreams LiveStream[]
   communityPosts CommunityPost[]
+  apFollowers ApFollower[]
 
   @@map("channels")
 }
@@ -371,29 +377,62 @@ enum TipStatus {
   FAILED
 }
 
+enum PaymentProvider {
+  INTERNAL
+  STRIPE
+  WEB3
+  YOOMONEY
+  PAYEER
+  CRYPTOBOT
+}
+
 model Tip {
-  id         String    @id @default(cuid())
-  amount     Int
-  currency   String    @default("USD")
-  message    String?
-  status     TipStatus @default(COMPLETED)
-  paymentRef String?
+  id          String          @id @default(cuid())
+  amount      Int
+  currency    String          @default("USD")
+  message     String?
+  status      TipStatus       @default(PENDING)
+  provider    PaymentProvider @default(INTERNAL)
+  paymentRef  String?
+  chainId     String?
+  txHash      String?
+  fromAddress String?
+  toAddress   String?
+  externalId  String?         @unique
+  checkoutUrl String?
+  meta        Json?
 
-  createdAt DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
-  fromUserId String
-  fromUser   User   @relation("TipSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+  fromUserId  String
+  fromUser    User      @relation("TipSender", fields: [fromUserId], references: [id], onDelete: Cascade)
 
-  toUserId String
-  toUser   User   @relation("TipReceiver", fields: [toUserId], references: [id], onDelete: Cascade)
+  toUserId    String
+  toUser      User      @relation("TipReceiver", fields: [toUserId], references: [id], onDelete: Cascade)
 
-  videoId String?
-  video   Video?  @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  videoId     String?
+  video       Video?    @relation(fields: [videoId], references: [id], onDelete: SetNull)
 
-  channelId String?
+  channelId   String?
 
   @@index([toUserId, createdAt])
   @@index([fromUserId])
   @@index([videoId])
   @@map("tips")
+}
+
+model ApFollower {
+  id           String   @id @default(cuid())
+  actorId      String
+  inbox        String
+  sharedInbox  String?
+  accepted     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  channelId    String
+  channel      Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, actorId])
+  @@index([channelId])
+  @@map("ap_followers")
 }
