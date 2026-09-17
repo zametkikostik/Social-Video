@@ -37,6 +37,9 @@ export class UsersService {
         bio: true,
         role: true,
         isVerified: true,
+        payoutAddress: true,
+        yoomoneyWallet: true,
+        payeerAccount: true,
         createdAt: true,
       },
     });
