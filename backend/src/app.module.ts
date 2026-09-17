@@ -11,6 +11,7 @@ import { LikesModule } from './modules/likes/likes.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { PlaylistsModule } from './modules/playlists/playlists.module';
+import { IpfsModule } from './modules/ipfs/ipfs.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { PrismaModule } from './prisma/prisma.module';
       envFilePath: ['.env', '../.env'],
     }),
     PrismaModule,
+    IpfsModule,
     AuthModule,
     UsersModule,
     VideosModule,

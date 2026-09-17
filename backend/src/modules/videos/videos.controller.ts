@@ -34,6 +34,17 @@ export class VideosController {
     );
   }
 
+  @Get('shorts')
+  async listShorts(
+    @Query('limit') limit = '20',
+    @Query('offset') offset = '0',
+  ) {
+    return this.videosService.listShorts(
+      parseInt(limit, 10),
+      parseInt(offset, 10),
+    );
+  }
+
   @Get('search')
   async search(
     @Query('q') q = '',
