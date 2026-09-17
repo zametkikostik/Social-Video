@@ -28,6 +28,8 @@ model User {
   subscribers   Subscription[] @relation("ChannelOwner")
   playlists     Playlist[]
   liveStreams   LiveStream[]
+  notifications Notification[] @relation("NotificationRecipient")
+  notificationsSent Notification[] @relation("NotificationActor")
 
   @@map("users")
 }
@@ -286,4 +288,36 @@ model LiveStream {
   @@index([status])
   @@index([channelId])
   @@map("live_streams")
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
+  SUBSCRIBE
+  LIVE
+  VIDEO_READY
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  body      String?
+  link      String?
+  isRead    Boolean          @default(false)
+  meta      Json?
+
+  createdAt DateTime @default(now())
+
+  recipientId String
+  recipient   User   @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  actorId     String?
+  actor       User?  @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId, isRead])
+  @@index([recipientId, createdAt])
+  @@map("notifications")
 }
