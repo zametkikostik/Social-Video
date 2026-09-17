@@ -79,4 +79,30 @@ export const api = {
     request(`/videos?limit=${limit}&offset=${offset}`),
 
   getVideo: (id: string) => request(`/videos/${id}`),
+
+  toggleLike: (videoId: string) =>
+    request(`/videos/${videoId}/likes/toggle`, { method: 'POST' }),
+
+  isLiked: (videoId: string) =>
+    request(`/videos/${videoId}/likes/me`),
+
+  listComments: (videoId: string) =>
+    request(`/videos/${videoId}/comments`),
+
+  createComment: (videoId: string, text: string, parentId?: string) =>
+    request(`/videos/${videoId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ text, parentId }),
+    }),
+
+  deleteComment: (id: string) =>
+    request(`/comments/${id}`, { method: 'DELETE' }),
+
+  toggleSubscribe: (channelId: string) =>
+    request(`/channels/${channelId}/subscribe/toggle`, { method: 'POST' }),
+
+  isSubscribed: (channelId: string) =>
+    request(`/channels/${channelId}/subscribe/me`),
+
+  mySubscriptions: () => request('/subscriptions/me'),
 };

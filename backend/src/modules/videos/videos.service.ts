@@ -166,6 +166,23 @@ export class VideosService {
     });
   }
 
+  async findByIdAndIncrementViews(id: string) {
+    const video = await this.findById(id);
+    this.prisma.video
+      .update({ where: { id }, data: { views: { increment: 1 } } })
+      .catch(() => {});
+    return { ...video, views: (video.views || 0) + 1 };
+  }
+
+  async incrementViews(id: string) {
+    const video = await this.prisma.video.update({
+      where: { id },
+      data: { views: { increment: 1 } },
+      select: { id: true, views: true },
+    });
+    return video;
+  }
+
   private generateSlug(title: string): string {
     const base = title
       .toLowerCase()
