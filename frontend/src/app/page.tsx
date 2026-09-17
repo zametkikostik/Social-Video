@@ -9,7 +9,7 @@ export default function HomePage() {
 
   useEffect(() => {
     api
-      .listVideos(24)
+      .getFeed(24)
       .then(setVideos)
       .catch(() => setVideos([]))
       .finally(() => setLoading(false));
@@ -43,7 +43,7 @@ export default function HomePage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold mb-4">Рекомендуемые видео</h2>
+        <h2 className="text-xl font-semibold mb-4">Рекомендации</h2>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
