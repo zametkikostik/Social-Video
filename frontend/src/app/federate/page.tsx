@@ -1,7 +1,58 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, getToken } from '@/lib/api';
+import { api, getToken, getUser } from '@/lib/api';
+
+function RelayAdmin() {
+  const [relays, setRelays] = useState<any[]>([]);
+  const [url, setUrl] = useState('');
+  const [msg, setMsg] = useState('');
+  const isAdmin = getUser()?.role === 'ADMIN';
+
+  useEffect(() => {
+    api.apRelays?.().then(setRelays).catch(() => {});
+  }, []);
+
+  if (!isAdmin) {
+    return <p className="text-xs text-zinc-600">Sign in as admin to manage relays.</p>;
+  }
+
+  async function add() {
+    setMsg('');
+    try {
+      await api.apAddRelay(url);
+      setMsg('Relay subscribed');
+      setRelays(await api.apRelays());
+    } catch (e: any) {
+      setMsg(e.message || 'Error');
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://relay.example/actor"
+          className="flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-xs"
+        />
+        <button type="button" onClick={add} className="rounded-full bg-zinc-100 text-zinc-900 px-3 py-1 text-xs">
+          Add
+        </button>
+      </div>
+      {msg && <p className="text-xs text-zinc-500">{msg}</p>}
+      <ul className="text-xs space-y-1">
+        {relays.map((r) => (
+          <li key={r.id} className="flex justify-between gap-2 border border-zinc-800 rounded px-2 py-1">
+            <span className="truncate">{r.name || r.actorUrl}</span>
+            <span>{r.enabled ? (r.accepted ? 'ok' : 'pending') : 'off'}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default function FederatePage() {
   const [resource, setResource] = useState('');
@@ -56,7 +107,7 @@ export default function FederatePage() {
     <div className="max-w-xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Fediverse</h1>
       <p className="text-sm text-zinc-500">
-        Follow remote actors (PeerTube, Mastodon, …) via ActivityPub. Example:{' '}
+        Follow remote actors via ActivityPub. Example:{' '}
         <code className="text-xs">acct:channel@peertube.example</code>
       </p>
       <div className="flex flex-col gap-2">
@@ -85,6 +136,11 @@ export default function FederatePage() {
           )}
         </pre>
       )}
+      <section className="space-y-2">
+        <h2 className="font-semibold">Relays (admin)</h2>
+        <p className="text-xs text-zinc-500">PeerTube-style relay — public videos fan-out there too.</p>
+        <RelayAdmin />
+      </section>
       <section>
         <h2 className="font-semibold mb-2">Following</h2>
         <ul className="space-y-2 text-sm">
